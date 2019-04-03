@@ -4,6 +4,8 @@
 #' @param module_list A named lists of lists where each sublist are the genes that make up the
 #' module and each sublist is named.
 #' @param md Optional meta data to add to the scores (for plotting purposes). Default: NULL
+#' @param assay Seurat assay object from which to pull data
+#' @param slot Assay slot to use
 #'
 #' @return
 #' @export
@@ -68,9 +70,14 @@ score_module_eigengenes.DESeqDataSet <- function(object, module_list){
 #' @return
 #' @export
 score_module_eigengenes.Seurat <- function(object,
-                                           module_list){
+                                           module_list,
+                                           assay = "RNA",
+                                           slot = "data"){
   scores <- future_map_dfc(names(module_list), function(j) {
-    exprDat <- FetchData(object = object, vars = module_list[[j]]) %>%
+    i <- glue("{tolower(assay)}_{module_list[[j]]}") %>% as.character()
+    exprDat <- FetchData(object = object,
+                         vars = i,
+                         slot = slot) %>%
       t()
     eigen <- rsvd(exprDat, k = 1)
     eigen[["v"]]

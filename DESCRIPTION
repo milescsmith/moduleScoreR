@@ -18,5 +18,9 @@ Depends:
   rsvd,
   dplyr,
   tibble,
-  DESeq2
+  DESeq2,
+  Seurat,
+  glue
+Remotes:
+  github::satijalab/seurat@release/3.0
 RoxygenNote: 6.1.1
