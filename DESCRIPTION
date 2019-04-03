@@ -15,12 +15,14 @@ LazyData: true
 Depends: 
   magrittr,
   furrr,
+  purrr,
   rsvd,
   dplyr,
   tibble,
   DESeq2,
   Seurat,
-  glue
+  glue,
+  clusterProfiler
 Remotes:
   github::satijalab/seurat@release/3.0
 RoxygenNote: 6.1.1
