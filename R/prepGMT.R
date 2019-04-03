@@ -23,7 +23,7 @@ prepGMT <- function(pathway_list,...){
 #'
 prepGMT.data.frame <- function(pathway_list){
   z <- split(x = pathway_list, f = pathway_list[["ont"]])
-  h2 <- z %>% map(function(x){
+  z %<>% map(function(x){
     y <- x %>% pull(gene)
   })
   names(z) <- unique(pathway_list$ont)
