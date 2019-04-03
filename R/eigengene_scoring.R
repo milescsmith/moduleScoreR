@@ -76,15 +76,20 @@ score_module_eigengenes.Seurat <- function(object,
                                            slot = "data"){
   scores <- future_map_dfc(names(module_list), function(j) {
     i <- intersect(module_list[[j]], slot(object[[assay]], slot))
-    i <- glue("{tolower(assay)}_{i}") %>% as.character()
-    exprDat <- FetchData(object = object,
-                         vars = i,
-                         slot = slot) %>%
-      t()
-    eigen <- rsvd(exprDat, k = 1)
-    eigen[["v"]]
-  }) %>%
+    if (length(i) > 0){
+      i <- glue("{tolower(assay)}_{i}") %>% as.character()
+      exprDat <- FetchData(object = object,
+                           vars = i,
+                           slot = slot) %>%
+        t()
+      eigen <- rsvd(exprDat, k = 1)
+      eigen[["v"]]
+    } else {
+      rep(0,ncol(object))
+    }
+    }) %>%
     as.matrix()
+
   rownames(scores) <- colnames(object)
   colnames(scores) <- names(module_list)
   #object[["eigengenes"]] <- CreateDimReducObject(embeddings = scores,
