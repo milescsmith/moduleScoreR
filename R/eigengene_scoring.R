@@ -58,3 +58,27 @@ score_module_eigengenes.DESeqDataSet <- function(object, module_list){
   scores <- score_module_eigengenes.default(object = exprs, module_list = module_list, md = md)
   return(scores)
 }
+
+#' @rdname score_module_eigengenes
+#' @method score_module_eigengenes Seurat
+#'
+#' @importFrom Seurat FetchData
+#' @importFrom glue glue
+#'
+#' @return
+#' @export
+score_module_eigengenes.Seurat <- function(object,
+                                           module_list){
+  scores <- future_map_dfc(names(module_list), function(j) {
+    exprDat <- FetchData(object = object, vars = module_list[[j]]) %>%
+      t()
+    eigen <- rsvd(exprDat, k = 1)
+    eigen[["v"]]
+  }) %>%
+    as.matrix()
+  rownames(scores) <- colnames(object)
+  colnames(scores) <- names(module_list)
+  #object[["eigengenes"]] <- CreateDimReducObject(embeddings = scores,
+  #                                            key = "eigen_")
+  return(scores)
+}
