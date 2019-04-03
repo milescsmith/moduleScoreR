@@ -66,6 +66,7 @@ score_module_eigengenes.DESeqDataSet <- function(object, module_list){
 #'
 #' @importFrom Seurat FetchData
 #' @importFrom glue glue
+#' @importFrom methods slot
 #'
 #' @return
 #' @export
@@ -74,7 +75,8 @@ score_module_eigengenes.Seurat <- function(object,
                                            assay = "RNA",
                                            slot = "data"){
   scores <- future_map_dfc(names(module_list), function(j) {
-    i <- glue("{tolower(assay)}_{module_list[[j]]}") %>% as.character()
+    i <- intersect(module_list[[j]], slot(object[[assay]], slot))
+    i <- glue("{tolower(assay)}_{i}") %>% as.character()
     exprDat <- FetchData(object = object,
                          vars = i,
                          slot = slot) %>%
