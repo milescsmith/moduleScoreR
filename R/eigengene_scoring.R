@@ -67,32 +67,29 @@ score_module_eigengenes.DESeqDataSet <- function(object, module_list){
 #' @importFrom Seurat FetchData
 #' @importFrom glue glue
 #' @importFrom methods slot
+#' @importFrom furrr future_map_dfc
 #'
 #' @return
 #' @export
 score_module_eigengenes.Seurat <- function(object,
-                                           module_list,
-                                           assay = "RNA",
-                                           slot = "data"){
-  scores <- future_map_dfc(names(module_list), function(j) {
-    i <- intersect(module_list[[j]], slot(object[[assay]], slot))
-    if (length(i) > 0){
-      i <- glue("{tolower(assay)}_{i}") %>% as.character()
-      exprDat <- FetchData(object = object,
-                           vars = i,
-                           slot = slot) %>%
-        t()
+                                           module_list){
+  intersecting_ml <- map(names(module_list), function(x){
+    intersect(module_list[[x]], rownames(aa))
+  })
+  names(intersecting_ml) <- names(module_list)
+  module_list <- intersecting_ml[lapply(intersecting_ml, length)>0]
+  scores <- future_map_dfc(.x = names(module_list),
+                           .progress = TRUE,
+                           .f = function(j) {
+    exprDat <- FetchData(object = object,
+                         vars = module_list[[j]]) %>%
+      t()
       eigen <- rsvd(exprDat, k = 1)
       eigen[["v"]]
-    } else {
-      rep(0,ncol(object))
-    }
     }) %>%
     as.matrix()
 
   rownames(scores) <- colnames(object)
   colnames(scores) <- names(module_list)
-  #object[["eigengenes"]] <- CreateDimReducObject(embeddings = scores,
-  #                                            key = "eigen_")
   return(scores)
 }
