@@ -1,6 +1,6 @@
-#' @title score_module_eigengenes
+#' @title scoreEigengenes
 #'
-#' @param object Either a matrix of expression values of a DESeqDataSet
+#' @param object Either a matrix of expression values, a DESeqDataSet object, or a Seurat object
 #' @param module_list A named lists of lists where each sublist are the genes that make up the
 #' module and each sublist is named.
 #' @param md Optional meta data to add to the scores (for plotting purposes). Default: NULL
@@ -11,12 +11,12 @@
 #' @export
 #'
 #' @examples
-score_module_eigengenes <- function(object,...){
-  UseMethod("score_module_eigengenes")
+scoreEigengenes <- function(object,...){
+  UseMethod("scoreEigengenes")
 }
 
-#' @rdname score_module_eigengenes
-#' @method score_module_eigengenes default
+#' @rdname scoreEigengenes
+#' @method scoreEigengenes default
 #'
 #' @importFrom rsvd rsvd
 #' @importFrom furrr future_map_dfc
@@ -26,9 +26,10 @@ score_module_eigengenes <- function(object,...){
 #'
 #' @return
 #' @export
-score_module_eigengenes.default <- function(object,
-                                            module_list,
-                                            md = NULL){
+scoreEigengenes.default <- function(object,
+                                    module_list,
+                                    md = NULL,
+                                    ...){
   scores <- future_map_dfc(names(module_list), function(j) {
     modgenes <- intersect(module_list[[j]], rownames(object))
     exprDat <- object[modgenes,]
@@ -40,29 +41,43 @@ score_module_eigengenes.default <- function(object,
   scores %<>% as.data.frame()
   scores$sample <- colnames(object)
   if (!is.null(md)){
-    md %<>% as.data.frame() %>% rownames_to_column('sample')
+    md %<>% as.data.frame() %>% rownames_to_column("sample")
     scores %<>% inner_join(md)
   }
   return(scores)
 }
 
-#' @rdname score_module_eigengenes
-#' @method score_module_eigengenes DESeqDataSet
+#' @rdname scoreEigengenes
+#' @method scoreEigengenes DESeqDataSet
 #'
 #' @importFrom DESeq2 vst
 #' @importFrom SummarizedExperiment assay colData
 #'
 #' @return
 #' @export
-score_module_eigengenes.DESeqDataSet <- function(object, module_list){
+scoreEigengenes.DESeqDataSet <- function(object,
+                                         module_list,
+                                         return_self = TRUE,
+                                         ...){
   exprs <- vst(object) %>% assay() %>% as.matrix()
   md <- colData(object)
-  scores <- score_module_eigengenes.default(object = exprs, module_list = module_list, md = md)
-  return(scores)
+  scores <- scoreEigengenes.default(object = exprs, module_list = module_list, md = md)
+
+  if(isTRUE(return_self)){
+    tmp <- colData(object)
+    tmp %>%
+      rownames_to_column("sample") %>%
+      inner_join(scores) %>%
+      column_to_rownames("sample")
+    colData(object) <- tmp
+    return(object)
+  } else {
+    return(scores)
+  }
 }
 
-#' @rdname score_module_eigengenes
-#' @method score_module_eigengenes Seurat
+#' @rdname scoreEigengenes
+#' @method scoreEigengenes Seurat
 #'
 #' @importFrom Seurat FetchData
 #' @importFrom glue glue
@@ -71,8 +86,10 @@ score_module_eigengenes.DESeqDataSet <- function(object, module_list){
 #'
 #' @return
 #' @export
-score_module_eigengenes.Seurat <- function(object,
-                                           module_list){
+scoreEigengenes.Seurat <- function(object,
+                                   module_list,
+                                   return_self = TRUE,
+                                   ...){
   intersecting_ml <- map(names(module_list), function(x){
     intersect(module_list[[x]], rownames(aa))
   })
@@ -87,9 +104,20 @@ score_module_eigengenes.Seurat <- function(object,
       eigen <- rsvd(exprDat, k = 1)
       eigen[["v"]]
     }) %>%
-    as.matrix()
+    as.data.frame()
 
-  rownames(scores) <- colnames(object)
   colnames(scores) <- names(module_list)
-  return(scores)
+  scores[["cells"]] <- colnames(object)
+
+
+  if(isTRUE(return_self)){
+    object@meta.data %<>%
+      rownames_to_column("cells") %>%
+      inner_join(scores) %>%
+      column_to_rownames("cells")
+    return(object)
+  } else {
+    return(scores)
+  }
 }
+
