@@ -91,7 +91,7 @@ scoreEigengenes.Seurat <- function(object,
                                    return_self = TRUE,
                                    ...){
   intersecting_ml <- map(names(module_list), function(x){
-    intersect(module_list[[x]], rownames(aa))
+    intersect(module_list[[x]], rownames(object))
   })
   names(intersecting_ml) <- names(module_list)
   module_list <- intersecting_ml[lapply(intersecting_ml, length)>0]
