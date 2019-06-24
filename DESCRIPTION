@@ -12,17 +12,19 @@ Description: Given a matrix of expression values or a DESeqDataSet, determine a 
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
-Depends: 
-  magrittr,
-  furrr,
-  purrr,
-  rsvd,
-  dplyr,
-  tibble,
-  DESeq2,
-  Seurat,
-  glue,
-  clusterProfiler
+Depends:
+    R (>= 3.5.0)
+Imports: 
+    magrittr,
+    furrr,
+    purrr,
+    rsvd,
+    dplyr,
+    tibble,
+    DESeq2,
+    Seurat,
+    glue,
+    clusterProfiler
 Remotes:
-  github::satijalab/seurat@release/3.0
+    github::satijalab/seurat
 RoxygenNote: 6.1.1
