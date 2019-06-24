@@ -20,10 +20,14 @@ scoreEigengenes(object, ...)
 \arguments{
 \item{object}{Either a matrix of expression values, a DESeqDataSet object, or a Seurat object}
 
+\item{...}{Not used}
+
 \item{module_list}{A named lists of lists where each sublist are the genes that make up the
 module and each sublist is named.}
 
 \item{md}{Optional meta data to add to the scores (for plotting purposes). Default: NULL}
+
+\item{return_self}{return a form of `object` with the scores added to it. Default: TRUE}
 
 \item{assay}{Seurat assay object from which to pull data}
 

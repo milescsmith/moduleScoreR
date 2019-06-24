@@ -14,7 +14,7 @@ Encoding: UTF-8
 LazyData: true
 Depends:
     R (>= 3.5.0)
-Imports: 
+Imports:
     magrittr,
     furrr,
     purrr,
@@ -24,7 +24,12 @@ Imports:
     DESeq2,
     Seurat,
     glue,
-    clusterProfiler
+    clusterProfiler,
+    SummarizedExperiment,
+    methods,
+    S4Vectors
 Remotes:
     github::satijalab/seurat
+    bioc::SummarizedExperiment
+    bioc::S4Vectors
 RoxygenNote: 6.1.1

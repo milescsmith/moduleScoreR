@@ -9,19 +9,19 @@
 #' @return
 #' @export
 #'
-#' @examples
-#'
-prepGMT <- function(pathway_list,...){
+prepGMT <- function(pathway_list, ...){
   UseMethod("prepGMT")
 }
 
 #' @rdname prepGMT
 #' @method prepGMT data.frame
 #' @importFrom purrr map
+#' @importFrom dplyr pull
 #' @return
 #' @export
 #'
-prepGMT.data.frame <- function(pathway_list){
+prepGMT.data.frame <- function(pathway_list, ...){
+  gene <- NULL
   z <- split(x = pathway_list, f = pathway_list[["ont"]])
   z %<>% map(function(x){
     y <- x %>% pull(gene)
@@ -36,7 +36,7 @@ prepGMT.data.frame <- function(pathway_list){
 #' @return
 #' @export
 #'
-prepGMT.character <- function(pathway_list){
+prepGMT.character <- function(pathway_list, ...){
   if(!file.exists(pathway_list)){
     stop(glue("Can't find {pathway_list}"))
   }

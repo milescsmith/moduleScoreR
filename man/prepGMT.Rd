@@ -8,9 +8,9 @@
 \usage{
 prepGMT(pathway_list, ...)
 
-\method{prepGMT}{data.frame}(pathway_list)
+\method{prepGMT}{data.frame}(pathway_list, ...)
 
-\method{prepGMT}{character}(pathway_list)
+\method{prepGMT}{character}(pathway_list, ...)
 }
 \arguments{
 \item{pathway_list}{A data.frame consisting of two columns (`ont`` and `gene`) or the
@@ -20,7 +20,4 @@ path to a gmt file}
 }
 \description{
 Prepare a GMT file for use in score_module_eigengenes
-}
-\examples{
-
 }

@@ -6,11 +6,12 @@
 #' @param md Optional meta data to add to the scores (for plotting purposes). Default: NULL
 #' @param assay Seurat assay object from which to pull data
 #' @param slot Assay slot to use
+#' @param return_self return a form of `object` with the scores added to it. Default: TRUE
+#' @param ... Not used
 #'
 #' @return
 #' @export
 #'
-#' @examples
 scoreEigengenes <- function(object,...){
   UseMethod("scoreEigengenes")
 }
@@ -21,7 +22,7 @@ scoreEigengenes <- function(object,...){
 #' @importFrom rsvd rsvd
 #' @importFrom furrr future_map_dfc
 #' @importFrom dplyr inner_join intersect
-#' @importFrom tibble rownames_to_column
+#' @importFrom tibble rownames_to_column column_to_rownames as_tibble
 #' @importFrom magrittr %<>% %>%
 #'
 #' @return
@@ -37,21 +38,24 @@ scoreEigengenes.default <- function(object,
     expr <- expr$v
     expr
   })
+  scores %<>% as.matrix() %>% as_tibble()
   names(scores) <- names(module_list)
-  scores %<>% as.data.frame()
-  scores$sample <- colnames(object)
+  scores[["sample"]] <- colnames(object)
   if (!is.null(md)){
-    md %<>% as.data.frame() %>% rownames_to_column("sample")
-    scores %<>% inner_join(md)
+    md %<>% as_tibble(rownames = "sample") %>% inner_join(scores)
+    return(md)
+  } else {
+    return(scores)
   }
-  return(scores)
+
 }
 
 #' @rdname scoreEigengenes
 #' @method scoreEigengenes DESeqDataSet
 #'
 #' @importFrom DESeq2 vst
-#' @importFrom SummarizedExperiment assay colData
+#' @importFrom SummarizedExperiment assay colData colData<-
+#' @importFrom S4Vectors DataFrame
 #'
 #' @return
 #' @export
@@ -64,12 +68,9 @@ scoreEigengenes.DESeqDataSet <- function(object,
   scores <- scoreEigengenes.default(object = exprs, module_list = module_list, md = md)
 
   if(isTRUE(return_self)){
-    tmp <- colData(object)
-    tmp %>%
-      rownames_to_column("sample") %>%
-      inner_join(scores) %>%
-      column_to_rownames("sample")
-    colData(object) <- tmp
+    scores %<>% DataFrame(row.names = .[["sample"]])
+    scores[["sample"]] <- NULL
+    colData(object) <- scores
     return(object)
   } else {
     return(scores)
@@ -83,6 +84,8 @@ scoreEigengenes.DESeqDataSet <- function(object,
 #' @importFrom glue glue
 #' @importFrom methods slot
 #' @importFrom furrr future_map_dfc
+#' @importFrom tibble column_to_rownames rownames_to_column
+#' @importFrom dplyr inner_join
 #'
 #' @return
 #' @export
