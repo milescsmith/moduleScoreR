@@ -29,7 +29,7 @@ Imports:
     methods,
     S4Vectors
 Remotes:
-    github::satijalab/seurat
-    bioc::SummarizedExperiment
+    github::satijalab/seurat,
+    bioc::SummarizedExperiment,
     bioc::S4Vectors
 RoxygenNote: 6.1.1
