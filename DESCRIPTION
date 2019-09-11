@@ -29,5 +29,7 @@ Imports:
     S4Vectors
 Remotes:
     bioc::SummarizedExperiment,
-    bioc::S4Vectors
+    bioc::S4Vectors,
+    bioc::DESeq2,
+    bioc::clusterProfiler
 RoxygenNote: 6.1.1
