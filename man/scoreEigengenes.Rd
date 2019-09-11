@@ -4,7 +4,6 @@
 \alias{scoreEigengenes}
 \alias{scoreEigengenes.default}
 \alias{scoreEigengenes.DESeqDataSet}
-\alias{scoreEigengenes.Seurat}
 \title{scoreEigengenes}
 \usage{
 scoreEigengenes(object, ...)
@@ -13,9 +12,6 @@ scoreEigengenes(object, ...)
 
 \method{scoreEigengenes}{DESeqDataSet}(object, module_list,
   return_self = TRUE, ...)
-
-\method{scoreEigengenes}{Seurat}(object, module_list, return_self = TRUE,
-  ...)
 }
 \arguments{
 \item{object}{Either a matrix of expression values, a DESeqDataSet object, or a Seurat object}
