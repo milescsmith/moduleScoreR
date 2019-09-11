@@ -19,7 +19,7 @@ scoreEigengenes <- function(object,...){
 #' @rdname scoreEigengenes
 #' @method scoreEigengenes default
 #'
-#' @importFrom rsvd rsvd
+#' @importFrom irlba irlba
 #' @importFrom furrr future_map_dfc
 #' @importFrom dplyr inner_join intersect
 #' @importFrom tibble rownames_to_column column_to_rownames as_tibble
@@ -34,7 +34,7 @@ scoreEigengenes.default <- function(object,
   scores <- future_map_dfc(names(module_list), function(j) {
     modgenes <- intersect(module_list[[j]], rownames(object))
     exprDat <- object[modgenes,]
-    expr <- rsvd(exprDat, k = 1)
+    expr <- irlba(A = exprDat, nv = 1)
     expr <- expr$v
     expr
   })
