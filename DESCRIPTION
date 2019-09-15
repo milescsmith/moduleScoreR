@@ -30,6 +30,5 @@ Imports:
 Remotes:
     bioc::SummarizedExperiment,
     bioc::S4Vectors,
-    bioc::DESeq2,
-    bioc::clusterProfiler
+    bioc::DESeq2
 RoxygenNote: 6.1.1
