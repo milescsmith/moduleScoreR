@@ -19,7 +19,7 @@ scoreEigengenes <- function(object,...){
 #' @rdname scoreEigengenes
 #' @method scoreEigengenes default
 #'
-#' @importFrom irlba irlba
+#' @importFrom rsvd rsvd
 #' @importFrom furrr future_map_dfc
 #' @importFrom dplyr inner_join intersect
 #' @importFrom tibble rownames_to_column column_to_rownames as_tibble
@@ -31,13 +31,13 @@ scoreEigengenes.default <- function(object,
                                     module_list,
                                     md = NULL,
                                     ...){
-  scores <- map_dfc(names(module_list), function(j) {
+  scores <- future_map_dfc(names(module_list), function(j) {
     modgenes <- intersect(module_list[[j]], rownames(object))
     if(length(modgenes) > 1){
-      exprDat <- object[modgenes,]
-      expr <- irlba(A = exprDat, nv = 1)
-      expr <- expr$v
-      return(expr)
+        exprDat <- object[modgenes,]
+        expr <- rsvd(exprDat, k = 1)
+        expr <- expr$v
+        return(expr)
     } else {
       return(matrix(rep(0,ncol(object))))
     }
@@ -51,7 +51,6 @@ scoreEigengenes.default <- function(object,
   } else {
     return(scores)
   }
-
 }
 
 #' @rdname scoreEigengenes

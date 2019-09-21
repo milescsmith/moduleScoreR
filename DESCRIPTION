@@ -18,7 +18,7 @@ Imports:
     magrittr,
     furrr,
     purrr,
-    irlba,
+    rsvd,
     dplyr,
     tibble,
     DESeq2,
@@ -27,7 +27,4 @@ Imports:
     SummarizedExperiment,
     methods,
     S4Vectors
-Remotes:
-    bioc::SummarizedExperiment,
-    bioc::S4Vectors
 RoxygenNote: 6.1.1
