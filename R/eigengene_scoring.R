@@ -31,12 +31,16 @@ scoreEigengenes.default <- function(object,
                                     module_list,
                                     md = NULL,
                                     ...){
-  scores <- future_map_dfc(names(module_list), function(j) {
+  scores <- map_dfc(names(module_list), function(j) {
     modgenes <- intersect(module_list[[j]], rownames(object))
-    exprDat <- object[modgenes,]
-    expr <- irlba(A = exprDat, nv = 1)
-    expr <- expr$v
-    expr
+    if(length(modgenes) > 1){
+      exprDat <- object[modgenes,]
+      expr <- irlba(A = exprDat, nv = 1)
+      expr <- expr$v
+      return(expr)
+    } else {
+      return(matrix(rep(0,ncol(object))))
+    }
   })
   scores %<>% as.matrix() %>% as_tibble()
   names(scores) <- names(module_list)
