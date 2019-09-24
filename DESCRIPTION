@@ -1,7 +1,7 @@
 Package: moduleScoreR
 Type: Package
 Title: Determines module scores for RNAseq data
-Version: 0.0.0.9000
+Version: 0.0.0.9200
 Authors@R: 
     person(given = "Miles",
            family = "Smith",

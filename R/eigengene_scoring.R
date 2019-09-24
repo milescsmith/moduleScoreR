@@ -35,7 +35,8 @@ scoreEigengenes.default <- function(object,
     modgenes <- intersect(module_list[[j]], rownames(object))
     if(length(modgenes) > 1){
         exprDat <- object[modgenes,]
-        expr <- rsvd(exprDat, k = 1)
+        expr <- rsvd(A = exprDat,
+                     k = 1)
         expr <- expr$v
         return(expr)
     } else {
