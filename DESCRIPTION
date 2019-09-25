@@ -26,5 +26,6 @@ Imports:
     clusterProfiler,
     SummarizedExperiment,
     methods,
-    S4Vectors
+    S4Vectors,
+    NMF
 RoxygenNote: 6.1.1

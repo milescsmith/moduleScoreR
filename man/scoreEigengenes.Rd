@@ -2,16 +2,13 @@
 % Please edit documentation in R/eigengene_scoring.R
 \name{scoreEigengenes}
 \alias{scoreEigengenes}
-\alias{scoreEigengenes.default}
 \alias{scoreEigengenes.DESeqDataSet}
 \title{scoreEigengenes}
 \usage{
 scoreEigengenes(object, ...)
 
-\method{scoreEigengenes}{default}(object, module_list, md = NULL, ...)
-
 \method{scoreEigengenes}{DESeqDataSet}(object, module_list,
-  return_self = TRUE, ...)
+  return_self = TRUE, method = "rsvd", ...)
 }
 \arguments{
 \item{object}{Either a matrix of expression values, a DESeqDataSet object, or a Seurat object}
@@ -21,9 +18,11 @@ scoreEigengenes(object, ...)
 \item{module_list}{A named lists of lists where each sublist are the genes that make up the
 module and each sublist is named.}
 
-\item{md}{Optional meta data to add to the scores (for plotting purposes). Default: NULL}
-
 \item{return_self}{return a form of `object` with the scores added to it. Default: TRUE}
+
+\item{method}{Factorization method to use in scoring. Currently only 'rsvd' and 'nmf' are allowed. Default: 'rsvd'}
+
+\item{md}{Optional meta data to add to the scores (for plotting purposes). Default: NULL}
 
 \item{assay}{Seurat assay object from which to pull data}
 

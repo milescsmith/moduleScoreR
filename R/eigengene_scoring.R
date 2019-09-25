@@ -7,6 +7,7 @@
 #' @param assay Seurat assay object from which to pull data
 #' @param slot Assay slot to use
 #' @param return_self return a form of `object` with the scores added to it. Default: TRUE
+#' @param method Factorization method to use in scoring. Currently only 'rsvd' and 'nmf' are allowed. Default: 'rsvd'
 #' @param ... Not used
 #'
 #' @return
@@ -16,8 +17,15 @@ scoreEigengenes <- function(object,...){
   UseMethod("scoreEigengenes")
 }
 
-#' @rdname scoreEigengenes
-#' @method scoreEigengenes default
+scoreEigengenes.default <- function(object,
+                                    module_list,
+                                    md = NULL,
+                                    ...){
+  return(scoreEigengenes_rsvd.default(object = object, module_list = module_list, md = md, ...))
+}
+
+#' @rdname scoreEigengenes_rsvd
+#' @method scoreEigengenes_rsvd default
 #'
 #' @importFrom rsvd rsvd
 #' @importFrom furrr future_map_dfc
@@ -27,7 +35,7 @@ scoreEigengenes <- function(object,...){
 #'
 #' @return
 #' @export
-scoreEigengenes.default <- function(object,
+scoreEigengenes_rsvd.default <- function(object,
                                     module_list,
                                     md = NULL,
                                     ...){
@@ -54,6 +62,46 @@ scoreEigengenes.default <- function(object,
   }
 }
 
+
+#' @rdname scoreEigengenes_nmf
+#' @method scoreEigengenes_nmf default
+#'
+#' @importFrom NMF nmf
+#' @importFrom furrr future_map_dfc
+#' @importFrom dplyr inner_join intersect
+#' @importFrom tibble rownames_to_column column_to_rownames as_tibble
+#' @importFrom magrittr %<>% %>%
+#'
+#' @return
+#' @export
+scoreEigengenes_nmf.default <- function(object,
+                                         module_list,
+                                         md = NULL,
+                                         ...){
+  scores <- map_dfc(names(module_list), function(j) {
+    modgenes <- intersect(module_list[[j]], rownames(object))
+    if(length(modgenes) > 1){
+      exprDat <- object[modgenes,]
+      expr <- nmf(exprDat, rank=1) %>%
+        slot("fit") %>%
+        slot("H") %>%
+        t()
+      as.matrix(expr)
+    } else {
+      matrix(rep(0,ncol(object)))
+    }
+  })
+  scores %<>% as.matrix() %>% as_tibble()
+  names(scores) <- names(module_list)
+  scores[["sample"]] <- colnames(object)
+  if (!is.null(md)){
+    md %<>% as_tibble(rownames = "sample") %>% inner_join(scores)
+    return(md)
+  } else {
+    return(scores)
+  }
+}
+
 #' @rdname scoreEigengenes
 #' @method scoreEigengenes DESeqDataSet
 #'
@@ -66,10 +114,16 @@ scoreEigengenes.default <- function(object,
 scoreEigengenes.DESeqDataSet <- function(object,
                                          module_list,
                                          return_self = TRUE,
+                                         method = "rsvd",
                                          ...){
   exprs <- vst(object) %>% assay() %>% as.matrix()
   md <- colData(object)
-  scores <- scoreEigengenes.default(object = exprs, module_list = module_list, md = md)
+
+  if (method == "rsvd") {
+    scores <- scoreEigengenes_rsvd.default(object = exprs, module_list = module_list, md = md)
+  } else if (method == "nmf") {
+    scores <- scoreEigengenes_nmf.default(object = exprs, module_list = module_list, md = md)
+  }
 
   if(isTRUE(return_self)){
     scores %<>% DataFrame(row.names = .[["sample"]])
