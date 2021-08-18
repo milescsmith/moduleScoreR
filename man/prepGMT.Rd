@@ -13,10 +13,19 @@ prepGMT(pathway_list, ...)
 \method{prepGMT}{character}(pathway_list, ...)
 }
 \arguments{
-\item{pathway_list}{A data.frame consisting of two columns (`ont`` and `gene`) or the
+\item{pathway_list}{A data.frame consisting of two columns (`term` and `gene`) or the
 path to a gmt file}
 
 \item{...}{Not used}
+}
+\value{
+
+
+Named list of modules and the genes constituting
+that module
+
+Named list of modules and the genes constituting
+that module
 }
 \description{
 Prepare a GMT file for use in score_module_eigengenes

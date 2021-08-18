@@ -4,15 +4,30 @@
 \alias{scoreEigengenes}
 \alias{scoreEigengenes.default}
 \alias{scoreEigengenes.DESeqDataSet}
+\alias{scoreEigengenes.DGEList}
 \title{scoreEigengenes}
 \usage{
 scoreEigengenes(object, ...)
 
-\method{scoreEigengenes}{default}(object, module_list, md = NULL,
-  score_func = "rsvd", ...)
+\method{scoreEigengenes}{default}(object, module_list, md = NULL, score_func = "rsvd", ...)
 
-\method{scoreEigengenes}{DESeqDataSet}(object, module_list,
-  return_self = TRUE, score_func = "rsvd", ...)
+\method{scoreEigengenes}{DESeqDataSet}(
+  object,
+  module_list,
+  return_self = TRUE,
+  score_func = "rsvd",
+  normalize_func = c("vst", "rlog"),
+  ...
+)
+
+\method{scoreEigengenes}{DGEList}(
+  object,
+  module_list,
+  return_self = TRUE,
+  score_func = "rsvd",
+  normalize_func = c("cpm", "rpkm"),
+  ...
+)
 }
 \arguments{
 \item{object}{Either a matrix of expression values, a DESeqDataSet object, or a Seurat object}
@@ -31,6 +46,16 @@ module and each sublist is named.}
 \item{assay}{Seurat assay object from which to pull data}
 
 \item{slot}{Assay slot to use}
+}
+\value{
+
+
+
+
+DESeqDataSet with scores added to the colData
+
+DGEList with module scores added to "samples"
+list component
 }
 \description{
 scoreEigengenes

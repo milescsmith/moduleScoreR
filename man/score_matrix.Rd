@@ -4,7 +4,7 @@
 \alias{score_matrix}
 \title{score_matrix}
 \usage{
-score_matrix(object, module_list, score_func = "rsvd")
+score_matrix(object, module_list, score_func = c("rsvd", "svd", "nmf"))
 }
 \arguments{
 \item{object}{matrix of gene expression to assign an eigenvalue}
@@ -12,6 +12,9 @@ score_matrix(object, module_list, score_func = "rsvd")
 \item{module_list}{list of gene modules}
 
 \item{score_func}{function to use to assign an eigenvalue. Functions allowed include 'svd', 'rsvd', and 'nmf'}
+}
+\value{
+Matrix of module scores
 }
 \description{
 score_matrix

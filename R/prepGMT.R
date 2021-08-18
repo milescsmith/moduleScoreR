@@ -2,7 +2,7 @@
 #'
 #' @description Prepare a GMT file for use in score_module_eigengenes
 #'
-#' @param pathway_list A data.frame consisting of two columns (`ont`` and `gene`) or the
+#' @param pathway_list A data.frame consisting of two columns (`term` and `gene`) or the
 #' path to a gmt file
 #' @param ... Not used
 #'
@@ -15,32 +15,39 @@ prepGMT <- function(pathway_list, ...){
 
 #' @rdname prepGMT
 #' @method prepGMT data.frame
+#'
 #' @importFrom purrr map
 #' @importFrom dplyr pull
-#' @return
+#'
+#' @return Named list of modules and the genes constituting
+#' that module
 #' @export
 #'
 prepGMT.data.frame <- function(pathway_list, ...){
-  gene <- NULL
-  z <- split(x = pathway_list, f = pathway_list[["ont"]])
-  z %<>% map(function(x){
-    y <- x %>% pull(gene)
-  })
-  names(z) <- unique(pathway_list$ont)
-  return(z)
+
+  split(
+    x = pathway_list,
+    f = pathway_list[["term"]]
+    ) |>
+  purrr::map(\(x) dplyr::pull(.data = x, var = "gene"))
 }
 
 #' @rdname prepGMT
 #' @method prepGMT character
+#'
 #' @importFrom clusterProfiler read.gmt
-#' @return
+#' @importFrom glue glue
+#'
+#' @return Named list of modules and the genes constituting
+#' that module
 #' @export
 #'
 prepGMT.character <- function(pathway_list, ...){
   if(!file.exists(pathway_list)){
-    stop(glue("Can't find {pathway_list}"))
+    stop(glue::glue("Can't find {pathway_list}"))
   }
-  z <- read.gmt(pathway_list)
-  z <- prepGMT.data.frame(z)
-  return(z)
+
+  clusterProfiler::read.gmt(pathway_list) |>
+    prepGMT.data.frame()
+
 }

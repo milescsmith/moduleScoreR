@@ -1,19 +1,22 @@
 Package: moduleScoreR
 Type: Package
 Title: Determines module scores for RNAseq data
-Version: 0.0.0.9200
+Version: 2.0.0
 Authors@R: 
     person(given = "Miles",
            family = "Smith",
            role = c("aut", "cre"),
            email = "miles-smith@omrf.org")
-Description: Given a matrix of expression values or a DESeqDataSet, determine a score representing the expression
-    of a set of gene constituting a "module"
+Description: Given a matrix of expression values
+    a DESeqDataSet, or a DGEList object
+    determine a score representing the expression
+    of a set of genes constituting a "module"
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
 Depends:
-    R (>= 3.5.0)
+    R (>= 4.1.0)
+biocViews:
 Imports:
     magrittr,
     furrr,
@@ -22,10 +25,11 @@ Imports:
     dplyr,
     tibble,
     DESeq2,
+    edgeR,
     glue,
     clusterProfiler,
     SummarizedExperiment,
     methods,
     S4Vectors,
     NMF
-RoxygenNote: 6.1.1
+RoxygenNote: 7.1.1

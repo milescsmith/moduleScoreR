@@ -21,66 +21,159 @@ scoreEigengenes <- function(object,...){
 #' @rdname scoreEigengenes
 #' @method scoreEigengenes default
 #'
-#' @importFrom dplyr inner_join intersect
-#' @importFrom tibble rownames_to_column column_to_rownames as_tibble
-#' @importFrom magrittr %<>% %>%
+#' @importFrom dplyr inner_join intersect mutate
+#' @importFrom tibble column_to_rownames as_tibble
+#' @importFrom tidyselect any_of
+#' @importFrom rlang set_names
 #'
 #' @return
 #' @export
-scoreEigengenes.default <- function(object,
-                                    module_list,
-                                    md = NULL,
-                                    score_func = "rsvd",
-                                    ...){
-  scores <- score_matrix(object = object,
-                         module_list = module_list,
-                         score_func = score_func)
-  scores %<>% as.matrix() %>% as_tibble()
-  names(scores) <- names(module_list)
-  scores[["sample"]] <- colnames(object)
+scoreEigengenes.default <-
+  function(
+    object,
+    module_list,
+    md = NULL,
+    score_func = "rsvd",
+    ...){
+
+  scores <-
+    score_matrix(
+      object = object,
+      module_list = module_list,
+      score_func = score_func
+      )
+
+  scores <-
+    as.matrix(scores) |>
+    tibble::as_tibble() |>
+    rlang::set_names(nm=names(module_list)) |>
+    dplyr::mutate(sample = colnames(object))
+
   if (!is.null(md)){
-    md %<>%
-      as_tibble(rownames = "sample") %>%
-      select(
-        unique(
-          c("sample",
-            colnames(md)[which(!colnames(md) %in% colnames(scores))]))) %>%
-      inner_join(scores)
-    return(md)
+    out <-
+      tibble::as_tibble(
+        x = md,
+        rownames = "sample"
+        ) |>
+      dplyr::select(
+        -tidyselect::any_of(colnames(scores)),
+        sample
+        ) |>
+      dplyr::inner_join(scores)
   } else {
-    return(scores)
+    out <- scores
   }
+
+  out
 }
 
 #' @rdname scoreEigengenes
 #' @method scoreEigengenes DESeqDataSet
 #'
-#' @importFrom DESeq2 vst
+#' @importFrom DESeq2 vst rlog
 #' @importFrom SummarizedExperiment assay colData colData<-
 #' @importFrom S4Vectors DataFrame
+#' @importFrom tibble column_to_rownames
 #'
-#' @return
+#' @return DESeqDataSet with scores added to the colData
 #' @export
-scoreEigengenes.DESeqDataSet <- function(object,
-                                         module_list,
-                                         return_self = TRUE,
-                                         score_func = "rsvd",
-                                         ...){
-  exprs <- vst(object) %>% assay() %>% as.matrix()
-  md <- colData(object)
-  scores <- scoreEigengenes.default(object = exprs,
-                                    module_list = module_list,
-                                    md = md,
-                                    score_func = score_func)
+scoreEigengenes.DESeqDataSet <-
+  function(
+    object,
+    module_list,
+    return_self = TRUE,
+    score_func = "rsvd",
+    normalize_func = c("vst", "rlog"),
+    ...
+    ){
 
-  if(isTRUE(return_self)){
-    scores %<>% DataFrame(row.names = .[["sample"]])
-    scores[["sample"]] <- NULL
-    colData(object) <- scores
-    return(object)
-  } else {
-    return(scores)
-  }
+    normalize_func <- match.arg(normalize_func)
+
+    exprs <-
+      switch(
+        normalize_fun,
+        vst  = DESeq2::vst(object),
+        rlog = DESeq2::rlog(object)
+      ) |>
+      SummarizedExperiment::assay() |>
+      as.matrix()
+
+    md <- SummarizedExperiment::colData(object)
+
+    scores <-
+      scoreEigengenes.default(
+        object = exprs,
+        module_list = module_list,
+        md = md,
+        score_func = score_func
+        )
+
+    if(isTRUE(return_self)){
+      scores <-
+        tibble::column_to_rownames(
+          scores,
+          var = "sample"
+        ) |>
+        DataFrame()
+
+      colData(object) <- scores
+      out <- object
+    } else {
+      out <- scores
+    }
+
+    out
+}
+
+#' @rdname scoreEigengenes
+#' @method scoreEigengenes DGEList
+#'
+#' @importFrom edgeR rpkm cpm
+#' @importFrom tibble column_to_rownames
+#'
+#' @return DGEList with module scores added to "samples"
+#' list component
+#' @export
+scoreEigengenes.DGEList <-
+  function(
+    object,
+    module_list,
+    return_self = TRUE,
+    score_func = "rsvd",
+    normalize_func = c("cpm", "rpkm"),
+    ...
+  ){
+
+    normalize_func = match.arg(normalize_func)
+
+    exprs <- switch(
+      normalize_func,
+      rpkm = edgeR::rpkm(object, log = TRUE, normalized.lib.sizes = TRUE),
+      cpm = edgeR::cpm(object, log = TRUE, normalized.lib.sizes = TRUE)
+    )
+
+    md <- object[["samples"]]
+
+    scores <-
+      scoreEigengenes.default(
+        object      = exprs,
+        module_list = module_list,
+        md          = md,
+        score_func  = score_func
+      )
+
+    if(isTRUE(return_self)){
+      object[["samples"]] <-
+        tibble::column_to_rownames(
+          .data = scores,
+          var   = "sample"
+        )
+
+      out <- object
+    } else {
+      out <- scores
+    }
+    out
 }
 
 #' @title score_matrix
@@ -96,52 +189,72 @@ scoreEigengenes.DESeqDataSet <- function(object,
 #' @importFrom purrr map_dfc
 #' @importFrom dplyr intersect
 #'
-#' @return
+#' @return Matrix of module scores
 #' @export
 #'
 #' @examples
-score_matrix <- function(object,
-                         module_list,
-                         score_func = "rsvd"){
-  switch(
+score_matrix <- function(
+  object,
+  module_list,
+  score_func = c("rsvd", "svd", "nmf")
+  ){
+
+  score_func <- match.arg(score_func)
+
+  out <- switch(
     score_func,
-    "svd" = future_map_dfc(names(module_list), function(j) {
-      modgenes <- intersect(module_list[[j]], rownames(object))
-      if(length(modgenes) > 1){
-        exprDat <- object[modgenes,]
-        expr <- svd(x = exprDat,
-                     nv = 1,
-                     nu = 1)
-        expr <- expr$v
-        return(expr)
-      } else {
-        return(matrix(rep(0,ncol(object))))
-      }
-    }),
-    "rsvd" = future_map_dfc(names(module_list), function(j) {
-      modgenes <- intersect(module_list[[j]], rownames(object))
-      if(length(modgenes) > 1){
-        exprDat <- object[modgenes,]
-        expr <- rsvd(A = exprDat,
-                     k = 1)
-        expr <- expr$v
-        return(expr)
-      } else {
-        return(matrix(rep(0,ncol(object))))
-      }
-    }),
-    "nmf" = map_dfc(names(module_list), function(j) {
-      modgenes <- intersect(module_list[[j]], rownames(object))
-      if(length(modgenes) > 1){
-        exprDat <- object[modgenes,]
-        expr <- nmf(exprDat, rank=1) %>%
-          slot("fit") %>%
-          slot("H") %>%
-          t()
-        as.matrix(expr)
-      } else {
-        matrix(rep(0,ncol(object)))
-      }
-    })
+    svd =
+      furrr::future_map_dfc(
+        .x = names(module_list),
+        .f =  function(j) {
+          modgenes <- intersect(module_list[[j]], rownames(object))
+          if(length(modgenes) > 1){
+            svd(
+              x = object[modgenes,],
+              nv = 1,
+              nu = 1
+              ) |>
+              purrr::chuck("v")
+          } else {
+            return(matrix(rep(0,ncol(object))))
+          }
+        }
+      ),
+    rsvd =
+      furrr::future_map_dfc(
+        .x = names(module_list),
+        .f = function(j) {
+          modgenes <- intersect(module_list[[j]], rownames(object))
+          if(length(modgenes) > 1){
+            rsvd::rsvd(
+              A = object[modgenes,],
+              k = 1
+              ) |>
+              purrr::chuck("v")
+          } else {
+            return(matrix(rep(0,ncol(object))))
+          }
+        }
+      ),
+    nmf =
+      purrr::map_dfc(
+        .x = names(module_list),
+        .f =  function(j) {
+          modgenes <- intersect(module_list[[j]], rownames(object))
+          if(length(modgenes) > 1){
+            NMF::nmf(
+              x = object[modgenes,], rank=1
+              ) |>
+              slot("fit") |>
+              slot("H") |>
+              t() |>
+              as.matrix()
+          } else {
+            return(matrix(rep(0,ncol(object))))
+          }
+        }
+      )
     )
-  }
+
+  out
+}
