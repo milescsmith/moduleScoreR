@@ -91,7 +91,7 @@ scoreEigengenes.DESeqDataSet <-
 
     exprs <-
       switch(
-        normalize_fun,
+        normalize_func,
         vst  = DESeq2::vst(object),
         rlog = DESeq2::rlog(object)
       ) |>
